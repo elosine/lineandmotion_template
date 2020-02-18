@@ -194,25 +194,25 @@ function roundByStep(value, step) {
   var inv = 1.0 / step;
   return Math.round(value * inv) / inv;
 }
-
+//FUNCTION floorByStep --------------------------------------------------------------------- //
 function floorByStep(value, step) {
   step || (step = 1.0);
   var inv = 1.0 / step;
   return Math.floor(value * inv) / inv;
 }
-
+//FUNCTION plot --------------------------------------------------------------------- //
 function midiToSpeed(ogmidi, destmidi) {
   var tspeed = Math.pow(2, (destmidi - ogmidi) * (1.0 / 12.0));
   return tspeed;
 }
-
+//FUNCTION plot --------------------------------------------------------------------- //
 function limitRange(num, min, max) {
   var tnewval;
   tnewval = Math.min(num, max);
   tnewval = Math.max(tnewval, min);
   return tnewval;
 }
-
+//FUNCTION plot --------------------------------------------------------------------- //
 function stringTo3DFloatArray(text) {
   var pitchesArray1 = [];
   var t1 = text.split(":");
@@ -235,7 +235,7 @@ function stringTo3DFloatArray(text) {
   }
   return pitchesArray1;
 }
-
+//FUNCTION plot --------------------------------------------------------------------- //
 function distributeOverRange(min, max, numVals) {
   var trange = max - min;
   var tinc = trange / numVals;
@@ -245,7 +245,7 @@ function distributeOverRange(min, max, numVals) {
   }
   return tvals;
 }
-
+//FUNCTION plot --------------------------------------------------------------------- //
 function plot(fn, range, width, height) {
   var tpoints = [];
   var widthScale = (width / (range[1] - range[0]));
@@ -266,7 +266,7 @@ function plot(fn, range, width, height) {
 Array.prototype.clone = function() {
   return this.slice(0);
 };
-
+//FUNCTION removeDuplicates -------------------------------------------------------- //
 function removeDuplicates(arr) {
   var c;
   var len = arr.length;
@@ -280,7 +280,7 @@ function removeDuplicates(arr) {
   }
   return result;
 }
-
+//TIMEDISPLAY ------------------------------------------------------------------------ //
 var objToday = new Date(),
   weekday = new Array('Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'),
   dayOfWeek = weekday[objToday.getDay()],
@@ -300,14 +300,12 @@ var objToday = new Date(),
   curMinute = objToday.getMinutes() < 10 ? "0" + objToday.getMinutes() : objToday.getMinutes(),
   curSeconds = objToday.getSeconds() < 10 ? "0" + objToday.getSeconds() : objToday.getSeconds(),
   curMeridiem = objToday.getHours() > 12 ? "PM" : "AM";
-
+//FUNCTION pad -------------------------------------------------------------- //
 function pad(num, size) {
   var s = "000000000" + num;
   return s.substr(s.length - size);
 }
-
-
-//FUNCTION playsamp ------------------------------------------------------ //
+//FUNCTION playsamp ----------------------------------------------------------------- //
 function playSamp(audioContext, path, rate) {
   var source = audioContext.createBufferSource();
   var request = new XMLHttpRequest();
@@ -326,19 +324,73 @@ function playSamp(audioContext, path, rate) {
   }
   request.send();
 }
-
-
 //sorting numbers
 function sortNumArr(arr) {
   arr.sort((a, b) => a - b);
   return arr;
 }
+// FUNCTION: beats2seconds ----------------------------------------------------------- //
+function beats2seconds(bpm, numbts) {
+  var t_secPerBeat = 1.0 / (bpm / 60.0);
+  var t_sec = t_secPerBeat * numbts;
+  return t_sec;
+}
 
 
 
+// FUNCTION: singleTempo ------------------------------------------------------------- //
+function singleTempo(tempo, instNum, startTime, endTime) {
+  var t_durSec = endTime - startTime;
+  var t_durMS = Math.ceil(t_durSec * 1000.0);
+  var t_beatNum = 0;
+  var t_lastBeatTcSec = 0;
+  var t_btsFloat = 0.0;
+
+//ABSTRACT THIS FOR ANY INCREMENT ///////////////////////////////////////////
+//ARRAY OF INCREMENTS (WAY TO MAKE SURE THEY ARE LARGER THAN 1MS)
+  var t_btsPerMs = tempo / 60000.0;
+  var t_numBts = 1;
+  // Initial Events @ 0 /////////////////////////////////////////
+  eventSet.push([startTime, instNum, 8, -1]); //inital event marker
+  eventSet.push([startTime, instNum, 0, -1]); //inital beat marker
+  for (var i = 0; i < t_durMS; i++) {
+    var t_btCtr = floorByStep(t_btsFloat, 1) - t_numBts;
+    if (t_btCtr == 0) {
+      var t_tcSec = (i / 1000.0) + startTime; //timecode in seconds
+      eventSet.push([startTime, instNum, 0, -1]);
+      t_numBts++;
+    }
+    t_btsFloat = t_btsFloat + t_btsPerMs;
+  }
+  ///////////////////////////////////////////////////////////////////////////
+}
+
+/*
+// FUNCTION: singleTempoGenerator_numBeats ------------------------------------------- //
+function singleTempoGenerator_numBeats(tempo, instNum, startTime, numBeats) {
+  var t_dur = beats2seconds(tempo, numBeats);
+  var t_endtime = startTime + t_dur;
+  singleTempo(tempo, instNum, startTime, t_endtime);
+  return t_endtime;
+}
 
 
 
+// if tempo is > 130 then draw half-notes
+if (tempo > 130) {
+  if ((t_beatNum % 2) == 0) {
+    eventSet.push([t_tcSec, instNum, 7, -1]);
+  }
+}
+// if tempo is < 60 then draw 16ths
+if (tempo < 60) {
+  //don't draw on the beat just partials 2-4
+  if ((t_16ct % 4) != 0) {
+    eventSet.push([t_tcSec, instNum, 6, -1]);
+  }
+}
+
+*/
 
 
 

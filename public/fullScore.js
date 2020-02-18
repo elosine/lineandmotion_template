@@ -1,22 +1,20 @@
 //////////////////////////////////////////////////////////////////////////////////////
 // GLOBAL VARIABLES ----------------------------------------------------------------//
 //////////////////////////////////////////////////////////////////////////////////////
-//TIMING & ANIMATION ENGINE ///////////////////////////////////////////
+//TIMING & ANIMATION ENGINE //////////////////////////////////////////////////
 var FRAMERATE = 60.0;
 var MSPERFRAME = 1000.0 / FRAMERATE;
 var SECPERFRAME = 1.0 / FRAMERATE;
-var PXPERSEC = 200.0;
+var PXPERSEC = 150.0;
 var PXPERMS = PXPERSEC / 1000.0;
 var PXPERFRAME = PXPERSEC / FRAMERATE;
 var framect = 0;
 var delta = 0.0;
 var lastFrameTimeMs = 0.0;
-var pieceClock = 0.0;
-var clockadj = 0.0;
 var leadTime = 4.0;
 var played = false;
 var startTime = 0;
-// COLORS //////////////////////////////////////////////////////////////
+// COLORS ///////////////////////////////////////////////////////////////////
 var clr_neonMagenta = new THREE.Color("rgb(255, 21, 160)");
 var clr_lightPink = new THREE.Color("rgb(240, 140, 160)");
 var clr_seaGreen = new THREE.Color("rgb(0, 255, 108)");
@@ -34,22 +32,22 @@ var clr_neonRed = new THREE.Color("rgb(255, 37, 2)");
 var clr_safetyOrange = new THREE.Color("rgb(255, 103, 0)");
 var clr_green = new THREE.Color("rgb(0, 255, 0)");
 var clr_white = new THREE.Color("rgb(255, 255, 255)");
-// SCENE ///////////////////////////////////////////////////////////////
+// SCENE //////////////////////////////////////////////////////////////////
 var camera, scene, renderer, canvas;
-//// Scene Settings ///////////////////////////////
-////// Camera Position Settings //////////
+//// Camera Position Settings //////////////////
 var CAM_Y = 370;
 var CAM_Z = 450;
 var CAM_ROTATION_X = rads(-65);
-////// Scene Size //////////
+//// Scene Size ////////////////////////////////
 var SCENE_W = 1920;
 var SCENE_H = 720;
-// var RUNWAYLENGTH = 1070;
 var RUNWAYLENGTH = 2070;
 var RUNWAYLENGTH_FRAMES = RUNWAYLENGTH / PXPERFRAME;
-// TRACKS ///////////////////////////////////////////////////////////////
-var NUMTRACKS = 6;
-var TRACK_X_OFFSET = 800;
+// PIECE SETUP ////////////////////////////////////////////////////////////
+var NUMPLAYERS = 6;
+var eventMatrix = []; //populated by eventSet in compAlgo.js
+// TRACKS ////////////////////////////////////////////////////////////////
+var NUMTRACKS = NUMPLAYERS;
 var TRACK_Y_OFFSET = 10;
 var TRACK_DIAMETER = 20;
 var SPACE_BETWEEN_TRACKS = 300;
@@ -58,7 +56,7 @@ for (var i = 0; i < NUMTRACKS; i++) {
   trLoc.push(0);
 }
 // GOFRETS //////////////////////////////////////////////////////////////
-//// Beats //////////////////////////////////
+//// Beats /////////////////////////////////////////////////////
 var GOFRETLENGTH = 10;
 var GOFRETHEIGHT = 14;
 var GOFRETPOSZ = (-GOFRETLENGTH / 2) + 1;
@@ -75,7 +73,7 @@ var stopGoFretBlink = [];
 for (var i = 0; i < NUMTRACKS; i++) {
   stopGoFretBlink.push(0);
 }
-//// Events //////////////////////////////////
+//// Events ///////////////////////////////////////////////////
 var EVENTGOFRETLENGTH = 12;
 var EVENTGOFRETHEIGHT = 21;
 var EVENTGOFRETPOSZ = (-EVENTGOFRETLENGTH / 2) + 2;
@@ -96,22 +94,21 @@ var NOTATION_CONTAINER_H = 350.0;
 var dictOfNotationSVGsByPart = {};
 var currentNotationById = [];
 var trLabels = ["Shaker", "Bottles", "Hand Clap", "Bass Drum", "Cow Bells", "Snare"];
-// EVENTS ////////////////////////////////////////////////////////////////
-var eventMatrix = [];
-//// Beat Markers //////////////////////////////////
+// EVENTS //////////////////////////////////////////////////////////////////////
+//// Beat Markers ////////////////////////////////////////////////////
 var beatMarkerGeom = new THREE.CubeGeometry(GOFRETWIDTH + 2, GOFRETHEIGHT + 2, GOFRETLENGTH + 2);
 //// Pitches //////////////////////////////////
 var pitchMarkerGeom = new THREE.CubeGeometry(GOFRETWIDTH - 20, GOFRETHEIGHT + 6, 8);
 var currentPitchesById = [];
 var dictOfPitchSVGsByPart = {};
-// CURVE FOLLOWERS /////////////////////////////////////////////////////////
+// CURVE FOLLOWERS ///////////////////////////////////////////////////
 var cresCrvRects = [];
 var cresSvgCrvs = [];
 var cresCrvFollowers = [];
 var cresCrvCoords;
 var crvFollowData = [];
 var notationCanvasH;
-// AUDIO /////////////////////////////////////////////////////////
+// AUDIO /////////////////////////////////////////////////////////////
 var actx;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FACTORY --------------------------------------------------------------------------------------//
@@ -121,7 +118,7 @@ function onstartup() {
   var startButton = document.getElementById("startButton");
   startButton.addEventListener("click", init);
 }
-// FUNCTION: init --------------------------------------------------------------- //
+// FUNCTION: init -------------------------------------------------------------------- //
 function init() {
   if (!played) {
     played = true;
@@ -130,36 +127,36 @@ function init() {
     eventMatrix = createEvents(); //startPiece trigger at end of this function
   }
 }
-// FUNCTION: startPiece --------------------------------------------------------------- //
-function startPiece() {
+// FUNCTION: startPiece -------------------------------------------------------------- //
+function startPiece() { //triggered at the end of createEvents()
   initAudio();
   requestAnimationFrame(animationEngine);
 }
-//FUNCTION initAudio ------------------------------------------------------ //
+//FUNCTION initAudio ----------------------------------------------------------------- //
 function initAudio() {
   actx = new(window.AudioContext || window.webkitAudioContext)();
 }
 // FUNCTION: createScene ------------------------------------------------------------- //
 function createScene() {
-  // CAMERA //////////////////////////////////////////////////////////////////
+  // CAMERA ////////////////////////////////////////////////////////////////////
   camera = new THREE.PerspectiveCamera(75, SCENE_W / SCENE_H, 1, 3000);
   camera.position.set(0, CAM_Y, CAM_Z);
   camera.rotation.x = rads(CAM_ROTATION_X);
-  // SCENE ///////////////////////////////////////////////////////////////////
+  // SCENE /////////////////////////////////////////////////////////////////////
   scene = new THREE.Scene();
-  // LIGHTS //////////////////////////////////////////////////////////////////
+  // LIGHTS ////////////////////////////////////////////////////////////////////
   var sun = new THREE.DirectionalLight(0xFFFFFF, 1.2);
   sun.position.set(100, 600, 175);
   scene.add(sun);
   var sun2 = new THREE.DirectionalLight(0x40A040, 0.6);
   sun2.position.set(-100, 350, 200);
   scene.add(sun2);
-  // RENDERER ////////////////////////////////////////////////////////////////
+  // RENDERER //////////////////////////////////////////////////////////////////
   renderer = new THREE.WebGLRenderer();
   renderer.setSize(SCENE_W, SCENE_H);
   canvas = document.getElementById('runway');
   canvas.appendChild(renderer.domElement);
-  // RUNWAY //////////////////////////////////////////////////////////////////
+  // RUNWAY ////////////////////////////////////////////////////////////////////
   var runwayMatl =
     new THREE.MeshLambertMaterial({
       color: 0x0040C0
@@ -172,7 +169,7 @@ function createScene() {
   runway.position.z = -RUNWAYLENGTH / 2;
   runway.rotation.x = rads(-90);
   scene.add(runway);
-  // TRACKS //////////////////////////////////////////////////////////////////////////////////////
+  // TRACKS ////////////////////////////////////////////////////////////////////
   var trgeom = new THREE.CylinderGeometry(TRACK_DIAMETER, TRACK_DIAMETER, RUNWAYLENGTH, 32);
   var trmatl = new THREE.MeshLambertMaterial({
     color: 0x708090
@@ -222,21 +219,18 @@ function createScene() {
           trLoc[i] = t_trX;
         }
       }
-
     }
-
     var tTr = new THREE.Mesh(trgeom, trmatl);
     tTr.rotation.x = rads(-90);
     tTr.position.z = -(RUNWAYLENGTH / 2);
     tTr.position.y = (-TRACK_DIAMETER / 2) + TRACK_Y_OFFSET;
     tTr.position.x = t_trX;
     scene.add(tTr);
-
   }
   //sort trLoc so tracks are in left to right order
   trLoc.sort((a, b) => a - b);
   for (var i = 0; i < NUMTRACKS; i++) {
-    // GO FRETS ////////////////////////////////////////////////////////////////////////////
+    // GO FRETS ////////////////////////////////////////////////////////////////
     //// BEAT GO INDICATOR ////////////////////////////////////////
     var tGoFretSet = [];
     var goFretMatl = new THREE.MeshLambertMaterial({
@@ -265,24 +259,15 @@ function createScene() {
     eventGoFrets.push(t_eventGoFretSet); // [mesh, matl]
   }
 
-  // NOTATION CONTAINERS ///////////////////////////////////////////////
+  // NOTATION CONTAINERS ///////////////////////////////////////////////////////
   var tcont = document.getElementById("notationContainersOuterDiv");
   var tcont_bb = tcont.getBoundingClientRect();
   var tcontW = tcont_bb.width;
   var tcontH = tcont_bb.height;
   var tcontCtr = tcontW / 2;
-  //find leftmost track location (will be the most negative or lowest)
   var t_trLx = trLoc[0];
-  // left margin is the center of the notation outer div + the left most track
-  // as the tracks are measured from the center
   var t_leftMargin = tcontCtr + t_trLx - (GOFRETWIDTH / 2);
-  //the gap between notation containers will be the spacebetween tracks - the width of the container
-  // css does this annoying thing where the new x of each subsequent container
-  // is the right edge of the last container
-  // var t_gap = SPACE_BETWEEN_TRACKS - GOFRETWIDTH; //should be this (50) but it isn't
   var t_gap = 58;
-  // I think the notation outer div and the threejs scene are not quite the same width
-  // so need a slight offset
   var t_offset = -17;
   for (var i = 0; i < NUMTRACKS; i++) {
     var tsvgCanvas = document.createElementNS(SVG_NS, "svg");
@@ -294,7 +279,7 @@ function createScene() {
     tsvgCanvas.style.backgroundColor = "white";
     tcont.appendChild(tsvgCanvas);
     notationContainerDOMs.push(tsvgCanvas);
-    // TEXT LABELS ///////////////////////////////////////////////
+    // TEXT LABELS /////////////////////////////////////////////////////////////
     var t_txY = NOTATION_CONTAINER_H - 15;
     var lbl_ob = document.createElementNS(SVG_NS, 'text');
     lbl_ob.setAttribute('x', '10');
@@ -304,7 +289,7 @@ function createScene() {
     lbl_ob.textContent = trLabels[i];
     notationContainerDOMs[i].appendChild(lbl_ob);
   }
-  // MAKE ALL NOTATION SVGS /////////////////////////////////////////////////////////////
+  // MAKE ALL NOTATION SVGS ////////////////////////////////////////////////////
   var notationCont_boundingBox = notationContainerDOMs[0].getBoundingClientRect();
   var notationContW = notationCont_boundingBox.width;
   var notationContH = notationCont_boundingBox.height;
@@ -334,7 +319,7 @@ function createScene() {
       currentNotationById.push(t_img.id);
     }
   }
-  // PITCHES SVGS ///////////////////////////////////////////////////////////
+  // PITCHES SVGS //////////////////////////////////////////////////////////////
   if (typeof pitchSetDictByPSByPart !== 'undefined') {
     for (const [key, value] of Object.entries(pitchSetDictByPSByPart)) {
       var t_notationSVGs = [];
@@ -361,12 +346,12 @@ function createScene() {
       currentPitchesById.push(t_img.id);
     }
   }
-  // CURVES  ///////////////////////////////////////////////////////////
+  // CURVES  ///////////////////////////////////////////////////////////////////
   cresCrvCoords = plot(function(x) {
     return Math.pow(x, 3);
   }, [0, 1, 0, 1], notationContW, notationContH * 0.6666666667);
   for (var i = 0; i < NUMTRACKS; i++) {
-    //// CURVE FOLLOW RECTS ////////////////////////////////////////
+    //// CURVE FOLLOW RECTS ////////////////////////////////////////////
     var tcresFollowRect = document.createElementNS(SVG_NS, "rect");
     tcresFollowRect.setAttributeNS(null, "x", "0");
     tcresFollowRect.setAttributeNS(null, "y", "0");
@@ -378,7 +363,7 @@ function createScene() {
     tcresFollowRect.setAttributeNS(null, 'visibility', 'hidden');
     notationContainerDOMs[i].appendChild(tcresFollowRect);
     cresCrvRects.push(tcresFollowRect);
-    //// CURVES ////
+    //// CURVES ////////////////////////////////////////////////////////
     var tcresSvgCrv = document.createElementNS(SVG_NS, "path");
     var tpathstr = "";
     for (var j = 0; j < cresCrvCoords.length; j++) {
@@ -412,19 +397,7 @@ function createScene() {
     //Make FOLLOWERS
     crvFollowData.push(0.0);
   }
-  // FOR FRAME BY FRAME TESTS -------------------------------------------- //
-  // document.addEventListener('keydown', function(event) {
-  //   if (event.code == 'KeyA') {
-  //     fbf()
-  //   }
-  // });
-  // function fbf() {
-  //   update(MSPERFRAME);
-  //   // draw();
-  // }
-  // RENDER ///////////////////////////////////////////////
-  // var helper = new THREE.CameraHelper(camera);
-  // scene.add(helper);
+  // RENDER ////////////////////////////////////////////////////////////////////
   renderer.render(scene, camera);
 }
 // FUNCTION: animationEngine --------------------------------------------------------- //
@@ -440,12 +413,10 @@ function animationEngine(timestamp) {
 }
 // UPDATE ---------------------------------------------------------------------------- //
 function update(aMSPERFRAME) {
-  // CLOCK ////////////////////////////////////////////////////////////////////////////
+  // CLOCK /////////////////////////////////////////////////////////////////////
   framect++;
-  pieceClock += aMSPERFRAME;
-  pieceClock = pieceClock - clockadj;
-  // EVENTS ///////////////////////////////////////////////////////////////////////////
-  //// [ t_goFrame, t_playerNum, drawEventGate, t_eventType, t_mesh, t_goTime, t_startZ, t_eventSpecificData, t_endFrame ]
+  // EVENTS ////////////////////////////////////////////////////////////////////
+  // [ t_goFrame, t_playerNum, drawEventGate, t_eventType, t_mesh, t_goTime, t_startZ, t_eventSpecificData, t_endFrame ]
   for (var i = 0; i < eventMatrix.length; i++) {
     var t_eventType = eventMatrix[i][3];
     var t_goFrame = eventMatrix[i][0];
@@ -467,7 +438,7 @@ function update(aMSPERFRAME) {
           scene.add(t_mesh);
         }
       }
-      //// GO FRAME ACTIONS /////////////////////////////////////////////////////////////////////////
+      //// GO FRAME ACTIONS ////////////////////////////////////////////////////
       if (framect == t_goFrame) {
         switch (t_eventType) {
           case 4: // Cres
@@ -482,8 +453,7 @@ function update(aMSPERFRAME) {
           default:
         }
       }
-
-      //// UPDATES ////////////////////////////////////////////////////////////////////////////////////
+      //// UPDATES /////////////////////////////////////////////////////////////
       if (framect > t_goFrame && framect < t_endFrame) {
         switch (t_eventType) {
           case 4: // Cres
@@ -497,32 +467,31 @@ function update(aMSPERFRAME) {
           default:
         }
       }
-
-      //// END FRAME ACTIONS /////////////////////////////////////////////////////////////////////////
+      //// END FRAME ACTIONS ///////////////////////////////////////////////////
       if (framect == t_endFrame) {
         switch (t_eventType) {
-          case 0: //beats
+          case 0: // Beats
             goFretBlink[t_playerNum] = framect + 11;
             break;
           case 1: // Notation events
             eventGoFretBlink[t_playerNum] = framect + 11;
-            //REMOVE PREVIOUS Notation
+            // REMOVE PREVIOUS NOTATION /////////////////////////////////////////
             var t_oldNotationId = document.getElementById(currentNotationById[t_playerNum]);
             if (t_oldNotationId != null) {
               notationContainerDOMs[t_playerNum].removeChild(t_oldNotationId);
             }
-            //Add New Notation
+            // Add New Notation ///////////////////////////////////////////////
             var t_img = dictOfNotationSVGsByPart[t_eventSpecificData][t_playerNum];
             notationContainerDOMs[t_playerNum].appendChild(t_img);
             currentNotationById[t_playerNum] = t_img.id;
             break;
-          case 2: // pitches
-            //REMOVE PREVIOUS Pitches
+          case 2: // Pitches
+            //REMOVE PREVIOUS PITCHES //////////////////////////////////////////
             var t_oldNotationId = document.getElementById(currentPitchesById[t_playerNum]);
             if (t_oldNotationId != null) {
               notationContainerDOMs[t_playerNum].removeChild(t_oldNotationId);
             }
-            //Add New Pitches
+            //Add New Pitches /////////////////////////////////////////////////
             var t_img = dictOfPitchSVGsByPart[t_eventSpecificData][t_playerNum];
             notationContainerDOMs[t_playerNum].appendChild(t_img);
             currentPitchesById[t_playerNum] = t_img.id;
@@ -585,10 +554,12 @@ function update(aMSPERFRAME) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FUNCTIONS ------------------------------------------------------------------------------------//
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// FUNCTION: createEvents ----------------------------------------------- //
+// FUNCTION: createEvents ------------------------------------------------------------- //
 function createEvents() {
-  ////// [0]oboe, [1]Violin,  [2]Piano, [3]Perc, [4]Viola, [5]Trombone, [6]Bass Clarinet, [7]Cello
-  // [ goTime, playerNum, eventType, eventSpecificData]  // EVENT TYPES: 0-beat; 1-notation; 2-pitch;
+  // [ goTime, playerNum, eventType, eventSpecificData]
+  // EVENT TYPES: 0-beat(neonMagenta); 1-notation(sea_green); 2-pitches(white);
+  // 3-stop(red); 4-cres(purple); 5-playSamps; 6-16ths(lightPink); 7-halfNotes(turquoise);
+  // 8-events(seaGreen)
   var t_eventMatrix = [];
   var t_eventIx = 0;
   for (var i = 0; i < eventSet.length; i++) {
@@ -607,7 +578,7 @@ function createEvents() {
     //// ------ Switch on eventType: eventSet[i][j][1] -----------------------//
     ////////////////////////////////////////////////////////////////////////////
     switch (t_eventType) {
-      case 0: // beats ---------------------------------------------------------------------
+      case 0: // beats ---------------------------------------------------------
         var t_beatMarkerMatl = new THREE.MeshLambertMaterial({
           color: clr_neonMagenta
         });
@@ -617,7 +588,7 @@ function createEvents() {
         t_mesh.position.x = trLoc[t_playerNum];
         t_mesh.name = t_eventIx + "_beat";
         break;
-      case 1: // Notation Events ------------------------------------------------------------------
+      case 1: // Notation Events -----------------------------------------------
         var t_eventMarkerMatl = new THREE.MeshLambertMaterial({
           color: clr_seaGreen
         });
@@ -627,7 +598,7 @@ function createEvents() {
         t_mesh.position.x = trLoc[t_playerNum];
         t_mesh.name = t_eventIx + "_notationevent";
         break;
-      case 2: // Pitches ---------------------------------------------------------------------
+      case 2: // Pitches -------------------------------------------------------
         var t_pitchesMarkerMatl = new THREE.MeshLambertMaterial({
           color: clr_white
         });
@@ -637,7 +608,7 @@ function createEvents() {
         t_mesh.position.x = trLoc[t_playerNum];
         t_mesh.name = t_eventIx + "_pitch";
         break;
-      case 3: // Stop ---------------------------------------------------------------------
+      case 3: // Stop ----------------------------------------------------------
         var t_stopMarkerMatl = new THREE.MeshLambertMaterial({
           color: clr_neonRed
         });
@@ -647,7 +618,7 @@ function createEvents() {
         t_mesh.position.x = trLoc[t_playerNum];
         t_mesh.name = t_eventIx + "_stop";
         break;
-      case 4: // Cres ---------------------------------------------------------------------
+      case 4: // Cres ----------------------------------------------------------
         var t_cresDur = t_eventSpecificData;
         var t_cresEventLength = t_cresDur * PXPERSEC;
         var t_cresEventGeom = new THREE.CubeGeometry(50, GOFRETHEIGHT + 5, t_cresEventLength);
@@ -661,10 +632,10 @@ function createEvents() {
         t_mesh.name = t_eventIx + "_cres";
         t_endFrame = t_goFrame + Math.round(t_cresDur * FRAMERATE);
         break;
-      case 5: // Samples ---------------------------------------------------------------------
+      case 5: // Samples -------------------------------------------------------
         var t_mesh = -1;
         break;
-      case 6: // 16ths ---------------------------------------------------------------------
+      case 6: // 16ths ---------------------------------------------------------
         var t_beatMarkerMatl = new THREE.MeshLambertMaterial({
           color: clr_lightPink
         });
@@ -674,7 +645,7 @@ function createEvents() {
         t_mesh.position.x = trLoc[t_playerNum];
         t_mesh.name = t_eventIx + "_16th";
         break;
-      case 7: // half-notes ---------------------------------------------------------------------
+      case 7: // half-notes ----------------------------------------------------
         var t_beatMarkerMatl = new THREE.MeshLambertMaterial({
           color: clr_turquoise
         });
@@ -684,7 +655,7 @@ function createEvents() {
         t_mesh.position.x = trLoc[t_playerNum];
         t_mesh.name = t_eventIx + "_halfnotes";
         break;
-      case 8: // New Event ------------------------------------------------------------------
+      case 8: // New Event -----------------------------------------------------
         var t_eventMarkerMatl = new THREE.MeshLambertMaterial({
           color: clr_seaGreen
         });
