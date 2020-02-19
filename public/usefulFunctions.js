@@ -339,17 +339,26 @@ function beats2seconds(bpm, numbts) {
 
 
 // FUNCTION: singleTempo ------------------------------------------------------------- //
-function singleTempo(tempo, instNum, startTime, endTime) {
+function singleTempo(tempo, instNum, startTime, endTime, btIncsAr) {
   var t_durSec = endTime - startTime;
   var t_durMS = Math.ceil(t_durSec * 1000.0);
   var t_beatNum = 0;
   var t_lastBeatTcSec = 0;
   var t_btsFloat = 0.0;
-
-//ABSTRACT THIS FOR ANY INCREMENT ///////////////////////////////////////////
-//ARRAY OF INCREMENTS (WAY TO MAKE SURE THEY ARE LARGER THAN 1MS)
   var t_btsPerMs = tempo / 60000.0;
-  var t_numBts = 1;
+
+  var t_btIncsTcSec = [];
+  var t_numIncs = [];
+  if (btIncsAr.isArray() && btIncsAr.length > 0) {
+    for (var i = 0; i < btIncsAr.length; i++) {
+      t_btIncsTcSec.push(btIncsAr[i], []);
+      t_numIncs.push(1);
+    }
+  }
+
+
+  //ABSTRACT THIS FOR ANY INCREMENT ///////////////////////////////////////////
+  //ARRAY OF INCREMENTS (WAY TO MAKE SURE THEY ARE LARGER THAN 1MS)
   // Initial Events @ 0 /////////////////////////////////////////
   eventSet.push([startTime, instNum, 8, -1]); //inital event marker
   eventSet.push([startTime, instNum, 0, -1]); //inital beat marker
