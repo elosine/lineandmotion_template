@@ -329,77 +329,107 @@ function sortNumArr(arr) {
   arr.sort((a, b) => a - b);
   return arr;
 }
+// FUNCTION: isNonEmptyArrayLike ----------------------------------------------------- //
+function isNonEmptyArrayLike(obj) {
+    try { // don't bother with `typeof` - just access `length` and `catch`
+        return obj.length > 0 && '0' in Object(obj);
+    }
+    catch(e) {
+        return false;
+    }
+}
 // FUNCTION: beats2seconds ----------------------------------------------------------- //
 function beats2seconds(bpm, numbts) {
   var t_secPerBeat = 1.0 / (bpm / 60.0);
   var t_sec = t_secPerBeat * numbts;
   return t_sec;
 }
-
-
-
 // FUNCTION: singleTempo ------------------------------------------------------------- //
 function singleTempo(tempo, instNum, startTime, endTime, btIncsAr) {
+  var t_btIncsAr = btIncsAr.clone();
+  t_btIncsAr.unshift(1, 0.25);
   var t_durSec = endTime - startTime;
   var t_durMS = Math.ceil(t_durSec * 1000.0);
   var t_beatNum = 0;
   var t_lastBeatTcSec = 0;
   var t_btsFloat = 0.0;
   var t_btsPerMs = tempo / 60000.0;
-
-  var t_btIncsTcSec = [];
-  var t_numIncs = [];
-  if (btIncsAr.isArray() && btIncsAr.length > 0) {
-    for (var i = 0; i < btIncsAr.length; i++) {
-      t_btIncsTcSec.push(btIncsAr[i], []);
-      t_numIncs.push(1);
-    }
-  }
-
-
-  //ABSTRACT THIS FOR ANY INCREMENT ///////////////////////////////////////////
-  //ARRAY OF INCREMENTS (WAY TO MAKE SURE THEY ARE LARGER THAN 1MS)
   // Initial Events @ 0 /////////////////////////////////////////
   eventSet.push([startTime, instNum, 8, -1]); //inital event marker
   eventSet.push([startTime, instNum, 0, -1]); //inital beat marker
+  var t_btIncsTcSec = [];
+  var t_numIncs = [];
+  var t_incCtr = [];
+  if (isNonEmptyArrayLike(t_btIncsAr)) {
+    for (var i = 0; i < t_btIncsAr.length; i++) {
+      t_btIncsTcSec.push([t_btIncsAr[i], []]);
+      t_numIncs.push(1);
+      t_incCtr.push(0);
+    }
+    console.log(t_btIncsTcSec);
+  }
   for (var i = 0; i < t_durMS; i++) {
-    var t_btCtr = floorByStep(t_btsFloat, 1) - t_numBts;
-    if (t_btCtr == 0) {
-      var t_tcSec = (i / 1000.0) + startTime; //timecode in seconds
-      eventSet.push([startTime, instNum, 0, -1]);
-      t_numBts++;
+    var t_tcSec = (i / 1000.0) + startTime; //timecode in seconds
+    for (var j = 0; j < t_btIncsAr.length; j++) {
+      if (t_btIncsAr[j] == 1) {
+        t_incCtr[j] = floorByStep(t_btsFloat, t_btIncsAr[j]) - t_numIncs[j];
+        if (t_incCtr[j] == 0) {
+          t_btIncsTcSec[j][1].push(t_tcSec);
+          eventSet.push([t_tcSec, instNum, 0, -1]);
+          // if tempo is > 130 then draw half-notes
+          if (tempo > 130) {
+            if ((t_numIncs[j] % 2) == 0) {
+              eventSet.push([t_tcSec, instNum, 7, -1]);
+            }
+          }
+          t_numIncs[j]++;
+        }
+      } else if (t_btIncsAr[j] == 0.25) {
+        t_incCtr[j] = floorByStep(t_btsFloat, t_btIncsAr[j]) - t_numIncs[j];
+        if (t_incCtr[j] == 0) {
+          t_btIncsTcSec[j][1].push(t_tcSec);
+          // if tempo is < 60 then draw 16ths
+          if (tempo < 60) {
+            //don't draw on the beat just partials 2-4
+            if ((t_numIncs[j] % 4) != 0) {
+              eventSet.push([t_tcSec, instNum, 6, -1]);
+            }
+          }
+          t_numIncs[j]++;
+        }
+      } else {
+        t_incCtr[j] = floorByStep(t_btsFloat, t_btIncsAr[j]) - t_numIncs[j];
+        if (t_incCtr[j] == 0) {
+          t_btIncsTcSec[j][1].push(t_tcSec);
+          t_numIncs[j]++;
+        }
+      }
     }
     t_btsFloat = t_btsFloat + t_btsPerMs;
   }
-  ///////////////////////////////////////////////////////////////////////////
+  return t_btIncsTcSec;
 }
-
-/*
 // FUNCTION: singleTempoGenerator_numBeats ------------------------------------------- //
-function singleTempoGenerator_numBeats(tempo, instNum, startTime, numBeats) {
+function singleTempoGenerator_numBeats(tempo, instNum, startTime, numBeats, a_btIncAr) {
+
   var t_dur = beats2seconds(tempo, numBeats);
   var t_endtime = startTime + t_dur;
-  singleTempo(tempo, instNum, startTime, t_endtime);
+  singleTempo(tempo, instNum, startTime, t_endtime, a_btIncAr);
   return t_endtime;
 }
 
 
 
-// if tempo is > 130 then draw half-notes
-if (tempo > 130) {
-  if ((t_beatNum % 2) == 0) {
-    eventSet.push([t_tcSec, instNum, 7, -1]);
-  }
-}
-// if tempo is < 60 then draw 16ths
-if (tempo < 60) {
-  //don't draw on the beat just partials 2-4
-  if ((t_16ct % 4) != 0) {
-    eventSet.push([t_tcSec, instNum, 6, -1]);
-  }
-}
 
-*/
+
+
+
+
+
+
+
+
+
 
 
 

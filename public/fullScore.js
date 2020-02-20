@@ -14,6 +14,7 @@ var lastFrameTimeMs = 0.0;
 var leadTime = 4.0;
 var played = false;
 var startTime = 0;
+var NUMPLAYERS = 1;
 // COLORS ///////////////////////////////////////////////////////////////////
 var clr_neonMagenta = new THREE.Color("rgb(255, 21, 160)");
 var clr_lightPink = new THREE.Color("rgb(240, 140, 160)");
@@ -44,7 +45,6 @@ var SCENE_H = 720;
 var RUNWAYLENGTH = 2070;
 var RUNWAYLENGTH_FRAMES = RUNWAYLENGTH / PXPERFRAME;
 // PIECE SETUP ////////////////////////////////////////////////////////////
-var NUMPLAYERS = 6;
 var eventMatrix = []; //populated by eventSet in compAlgo.js
 // TRACKS ////////////////////////////////////////////////////////////////
 var NUMTRACKS = NUMPLAYERS;
@@ -258,7 +258,6 @@ function createScene() {
     t_eventGoFretSet.push(t_eventGoFretMatl);
     eventGoFrets.push(t_eventGoFretSet); // [mesh, matl]
   }
-
   // NOTATION CONTAINERS ///////////////////////////////////////////////////////
   var tcont = document.getElementById("notationContainersOuterDiv");
   var tcont_bb = tcont.getBoundingClientRect();
@@ -268,7 +267,8 @@ function createScene() {
   var t_trLx = trLoc[0];
   var t_leftMargin = tcontCtr + t_trLx - (GOFRETWIDTH / 2);
   var t_gap = 58;
-  var t_offset = -17;
+  // var t_offset = -17;
+  var t_offset = 0;
   for (var i = 0; i < NUMTRACKS; i++) {
     var tsvgCanvas = document.createElementNS(SVG_NS, "svg");
     tsvgCanvas.setAttributeNS(null, "width", GOFRETWIDTH.toString());

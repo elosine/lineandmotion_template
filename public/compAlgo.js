@@ -4,9 +4,10 @@
 // 8-events(seaGreen)
 var eventSet = [];
 var ogInsts = [];
-var t = Math.floor( 1 )%2;
-console.log(t);
 
+var ta = [0.5];
+singleTempoGenerator_numBeats(60, 0, 0, 16, []);
+console.log(eventSet);
 
 
 
