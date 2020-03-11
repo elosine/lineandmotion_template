@@ -115,10 +115,7 @@ var ts = timesync.create({
   server: '/timesync',
   interval: 10000
 });
-var startTimeSync, syncTime;
-var firstTimeStamp = 0;
-var firstTimeStampGate = true;
-var lastSyncTime = 0;
+var syncOffset=0;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FACTORY --------------------------------------------------------------------------------------//
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -137,14 +134,13 @@ function init() {
   }
 }
 // FUNCTION: startClockSync -------------------------------------------------------------- //
-function startClockSync() { //triggered at the end of createEvents()
-  var startTimeSync_a = new Date(ts.now());
-  startTimeSync = startTimeSync_a.getTime();
-  // get synchronized time
-  setInterval(function() {
-    var now = new Date(ts.now());
-    syncTime = (now.getTime() - startTimeSync) / 1000.0;
-  }, 1000);
+function startClockSync() {
+  var t_localSysTimeDate = new Date();
+  lastFrameTimeMs = t_localSysTimeDate.getTime();
+  // get notified on changes in the offset
+  ts.on('change', function (offset) {
+    syncOffset = offset;
+  });
 }
 // FUNCTION: startPiece -------------------------------------------------------------- //
 function startPiece() { //triggered at the end of createEvents()
@@ -155,6 +151,20 @@ function startPiece() { //triggered at the end of createEvents()
 //FUNCTION initAudio ----------------------------------------------------------------- //
 function initAudio() {
   actx = new(window.AudioContext || window.webkitAudioContext)();
+}
+var ct = 0;
+// FUNCTION: animationEngine --------------------------------------------------------- //
+function animationEngine(timestamp) {
+  var t_localSysTimeDate = new Date();
+  var t_lt = t_localSysTimeDate.getTime() + syncOffset;
+  delta += t_lt - lastFrameTimeMs;
+  lastFrameTimeMs = t_lt;
+  while (delta >= MSPERFRAME) {
+    update(MSPERFRAME);
+    // draw();
+    delta -= MSPERFRAME;
+  }
+  requestAnimationFrame(animationEngine);
 }
 // FUNCTION: createScene ------------------------------------------------------------- //
 function createScene() {
@@ -419,28 +429,6 @@ function createScene() {
   }
   // RENDER ////////////////////////////////////////////////////////////////////
   renderer.render(scene, camera);
-}
-// FUNCTION: animationEngine --------------------------------------------------------- //
-function animationEngine(timestamp) {
-  //look at the timesync library time difference function in the example
-//   if (firstTimeStampGate) {
-//     firstTimeStamp = timestamp;
-//     firstTimeStampGate = false;
-//   }
-//   var t_ts;
-//   if(lastSyncTime != syncTime){
-//   t_ts = syncTime;
-// } else{
-//   t_ts  = timestamp - firstTimeStamp;
-// }
-  delta += timestamp - lastFrameTimeMs;
-  lastFrameTimeMs = timestamp;
-  while (delta >= MSPERFRAME) {
-    update(MSPERFRAME);
-    // draw();
-    delta -= MSPERFRAME;
-  }
-  requestAnimationFrame(animationEngine);
 }
 // UPDATE ---------------------------------------------------------------------------- //
 function update(aMSPERFRAME) {
