@@ -6,7 +6,7 @@ var eventSet = [];
 var ogInsts = [];
 
 var ta = [0.5];
-singleTempoGenerator_numBeats(60, 0, 0, 16, []);
+singleTempoGenerator_numBeats(60, 0, 0, 100, []);
 console.log(eventSet);
 
 

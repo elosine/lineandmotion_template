@@ -1,3 +1,4 @@
+var timesyncServer = require('timesync/server');
 var express = require('express');
 var app = express();
 var path = require('path');
@@ -10,3 +11,6 @@ app.get('/', function(req, res){
 });
 
 app.listen(PORT, () => console.log(`Listening on ${ PORT }`));
+
+// handle timesync requests
+app.use('/timesync', timesyncServer.requestHandler);

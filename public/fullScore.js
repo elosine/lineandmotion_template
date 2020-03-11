@@ -110,6 +110,15 @@ var crvFollowData = [];
 var notationCanvasH;
 // AUDIO /////////////////////////////////////////////////////////////
 var actx;
+// CLOCK /////////////////////////////////////////////////////////////
+var ts = timesync.create({
+  server: '/timesync',
+  interval: 10000
+});
+var startTimeSync, syncTime;
+var firstTimeStamp = 0;
+var firstTimeStampGate = true;
+var lastSyncTime = 0;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FACTORY --------------------------------------------------------------------------------------//
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -127,9 +136,20 @@ function init() {
     eventMatrix = createEvents(); //startPiece trigger at end of this function
   }
 }
+// FUNCTION: startClockSync -------------------------------------------------------------- //
+function startClockSync() { //triggered at the end of createEvents()
+  var startTimeSync_a = new Date(ts.now());
+  startTimeSync = startTimeSync_a.getTime();
+  // get synchronized time
+  setInterval(function() {
+    var now = new Date(ts.now());
+    syncTime = (now.getTime() - startTimeSync) / 1000.0;
+  }, 1000);
+}
 // FUNCTION: startPiece -------------------------------------------------------------- //
 function startPiece() { //triggered at the end of createEvents()
   initAudio();
+  startClockSync();
   requestAnimationFrame(animationEngine);
 }
 //FUNCTION initAudio ----------------------------------------------------------------- //
@@ -402,6 +422,17 @@ function createScene() {
 }
 // FUNCTION: animationEngine --------------------------------------------------------- //
 function animationEngine(timestamp) {
+  //look at the timesync library time difference function in the example
+//   if (firstTimeStampGate) {
+//     firstTimeStamp = timestamp;
+//     firstTimeStampGate = false;
+//   }
+//   var t_ts;
+//   if(lastSyncTime != syncTime){
+//   t_ts = syncTime;
+// } else{
+//   t_ts  = timestamp - firstTimeStamp;
+// }
   delta += timestamp - lastFrameTimeMs;
   lastFrameTimeMs = timestamp;
   while (delta >= MSPERFRAME) {
@@ -413,7 +444,6 @@ function animationEngine(timestamp) {
 }
 // UPDATE ---------------------------------------------------------------------------- //
 function update(aMSPERFRAME) {
-  // CLOCK /////////////////////////////////////////////////////////////////////
   framect++;
   // EVENTS ////////////////////////////////////////////////////////////////////
   // [ t_goFrame, t_playerNum, drawEventGate, t_eventType, t_mesh, t_goTime, t_startZ, t_eventSpecificData, t_endFrame ]
@@ -421,10 +451,12 @@ function update(aMSPERFRAME) {
     var t_eventType = eventMatrix[i][3];
     var t_goFrame = eventMatrix[i][0];
     var t_endFrame = eventMatrix[i][8];
+    var t_startZ = eventMatrix[i][6];
     if (t_eventType != 5) {
       var t_mesh = eventMatrix[i][4];
       // Advance EVENT MESH
-      t_mesh.position.z += PXPERFRAME;
+      // t_mesh.position.z += PXPERFRAME;
+      t_mesh.position.z = t_startZ + (framect * PXPERFRAME);
     }
     //// Only look at events if they are on the scene
     if (t_goFrame <= (framect + RUNWAYLENGTH_FRAMES) && t_endFrame >= framect) {
