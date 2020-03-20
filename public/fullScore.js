@@ -116,23 +116,24 @@ var ts = timesync.create({
   interval: 10000
 });
 var syncOffset = 0;
+// SOCKET IO /////////////////////////////////////////////////////////////
+var socket = io();
+var eventSet;
+// initial event after createScene();
+socket.on('eventsetbroadcast', function(data) {
+  if (!played) {
+    played = true;
+    eventSet = data.eventdata;
+    startTime = data.startTime;
+    eventMatrix = createEvents(); //startPiece trigger at end of this function
+  }
+});
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FACTORY --------------------------------------------------------------------------------------//
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FUNCTION: onstartup --------------------------------------------------------------- //
 function onstartup() {
   createScene();
-  //   var startButton = document.getElementById("startButton");
-  //   startButton.addEventListener("click", init);
-}
-// FUNCTION: init -------------------------------------------------------------------- //
-function init(a_startTime) {
-  if (!played) {
-    played = true;
-    startTime = a_startTime;
-    // startButton.parentNode.removeChild(startButton);
-    eventMatrix = createEvents(); //startPiece trigger at end of this function
-  }
 }
 // FUNCTION: startPiece -------------------------------------------------------------- //
 function startPiece() { //triggered at the end of createEvents()

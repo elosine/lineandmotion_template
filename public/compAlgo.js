@@ -5,9 +5,8 @@
 var eventSet = [];
 var ogInsts = [];
 
-var ta = [0.5];
+// function singleTempoGenerator_numBeats(tempo, instNum, startTime, numBeats, a_btIncAr) {
 singleTempoGenerator_numBeats(60, 0, 0, 100, []);
-console.log(eventSet);
 
 
 

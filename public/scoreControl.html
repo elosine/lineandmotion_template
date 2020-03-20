@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+  <title>Prolonged into the latent - Score Control</title>
+  <link rel="stylesheet" type="text/css" href="webinterface_stylesheet.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato">
+</head>
+
+<body>
+  <h1>P R O L O N G E D&nbsp; &nbsp; I N T O&nbsp; &nbsp; T H E&nbsp; &nbsp; L A T E N T</h1>
+  <h2>A work for unaccompanied choir</h2>
+  <h3>Justin Yang</h3>
+  </br>
+  <h4>Score Control</h4>
+  <form id='startpieceForm' class='inputform'>
+    <select id="cars" name="cars" >
+      <option value="generated">Generated</option>
+        <option value="2020_03_27_13-55">2020_03_27_13-55</option>
+      <option value="fiat">Fiat</option>
+      <option value="audi">Audi</option>
+    </select>
+    <label for="scoreInstanceFF">choose score instance</label> </br>
+    <input type="text" id="startingTimeFF" name="startingTimeFF" size='5' value='0' >
+    <label for="startingTimeFF">start score at this time (seconds)</label> </br>
+    <input type="submit" value="Start Piece">
+  </form>
+  <button id='tb'></button>
+</body>
+
+<!-- SCRIPTS ---------------------------------------------------------->
+<script src="/socket.io/socket.io.js"></script>
+<script src="usefulFunctions.js"></script>
+<script src="compAlgo.js"></script>
+<script src="scoreControl.js"></script>
+
+<!-- run comp algo
+send eventSet array to clients using socket.io-->
+
+
+<!-- SCRIPTS ---------------------------------------------------------->
+
+
+</html>

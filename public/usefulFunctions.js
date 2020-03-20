@@ -366,7 +366,6 @@ function singleTempo(tempo, instNum, startTime, endTime, btIncsAr) {
       t_numIncs.push(1);
       t_incCtr.push(0);
     }
-    console.log(t_btIncsTcSec);
   }
   for (var i = 0; i < t_durMS; i++) {
     var t_tcSec = (i / 1000.0) + startTime; //timecode in seconds
