@@ -115,32 +115,24 @@ var ts = timesync.create({
   server: '/timesync',
   interval: 10000
 });
-var syncOffset=0;
+var syncOffset = 0;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FACTORY --------------------------------------------------------------------------------------//
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // FUNCTION: onstartup --------------------------------------------------------------- //
 function onstartup() {
-  var startButton = document.getElementById("startButton");
-  startButton.addEventListener("click", init);
+  createScene();
+  //   var startButton = document.getElementById("startButton");
+  //   startButton.addEventListener("click", init);
 }
 // FUNCTION: init -------------------------------------------------------------------- //
-function init() {
+function init(a_startTime) {
   if (!played) {
     played = true;
-    startButton.parentNode.removeChild(startButton);
-    createScene();
+    startTime = a_startTime;
+    // startButton.parentNode.removeChild(startButton);
     eventMatrix = createEvents(); //startPiece trigger at end of this function
   }
-}
-// FUNCTION: startClockSync -------------------------------------------------------------- //
-function startClockSync() {
-  var t_localSysTimeDate = new Date();
-  lastFrameTimeMs = t_localSysTimeDate.getTime();
-  // get notified on changes in the offset
-  ts.on('change', function (offset) {
-    syncOffset = offset;
-  });
 }
 // FUNCTION: startPiece -------------------------------------------------------------- //
 function startPiece() { //triggered at the end of createEvents()
@@ -148,11 +140,19 @@ function startPiece() { //triggered at the end of createEvents()
   startClockSync();
   requestAnimationFrame(animationEngine);
 }
+// FUNCTION: startClockSync -------------------------------------------------------------- //
+function startClockSync() {
+  var t_now = new Date(ts.now());
+  lastFrameTimeMs = t_now.getTime();
+  // get notified on changes in the offset
+  ts.on('change', function(offset) {
+    syncOffset = offset;
+  });
+}
 //FUNCTION initAudio ----------------------------------------------------------------- //
 function initAudio() {
   actx = new(window.AudioContext || window.webkitAudioContext)();
 }
-var ct = 0;
 // FUNCTION: animationEngine --------------------------------------------------------- //
 function animationEngine(timestamp) {
   var t_localSysTimeDate = new Date();
