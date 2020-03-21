@@ -21,11 +21,14 @@ app.use('/timesync', timesyncServer.requestHandler);
 
 //socket.io
 io.on('connection', function(socket) {
-  socket.on('startpiece', function(data) {
-    console.log(data.startTime);
-    socket.broadcast.emit('eventsetbroadcast', {
+  socket.on('createEvents', function(data) {
+    console.log("fdsa");
+    socket.broadcast.emit('createEventsBroadcast', {
       eventdata: data.eventdata,
       startTime: data.startTime
     });
   });
+    socket.on('startpiece', function(data) {
+      socket.broadcast.emit('startpiecebroadcast', {});
+    });
 });

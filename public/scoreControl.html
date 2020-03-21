@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <head>
   <meta charset="utf-8">
   <title>Prolonged into the latent - Score Control</title>
@@ -10,11 +12,10 @@
 
 <body>
   <h1>P R O L O N G E D&nbsp; &nbsp; I N T O&nbsp; &nbsp; T H E&nbsp; &nbsp; L A T E N T</h1>
-  <h2>A work for unaccompanied choir</h2>
-  <h3>Justin Yang</h3>
+  <h2>A work for unaccompanied choir by Justin Yang</h2>
   </br>
   <h4>Score Control</h4>
-  <form id='startpieceForm' class='inputform'>
+  <form id='createEventsForm' class='inputform'>
     <select id="cars" name="cars" >
       <option value="generated">Generated</option>
         <option value="2020_03_27_13-55">2020_03_27_13-55</option>
@@ -24,9 +25,9 @@
     <label for="scoreInstanceFF">choose score instance</label> </br>
     <input type="text" id="startingTimeFF" name="startingTimeFF" size='5' value='0' >
     <label for="startingTimeFF">start score at this time (seconds)</label> </br>
-    <input type="submit" value="Start Piece">
+    <input type="submit" value="Create Events">
   </form>
-  <button id='tb'></button>
+  <button class='gbtn' id='gobutton'>GO</button>
 </body>
 
 <!-- SCRIPTS ---------------------------------------------------------->

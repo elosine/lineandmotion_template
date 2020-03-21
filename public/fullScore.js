@@ -1,19 +1,13 @@
 //////////////////////////////////////////////////////////////////////////////////////
 // GLOBAL VARIABLES ----------------------------------------------------------------//
 //////////////////////////////////////////////////////////////////////////////////////
-//TIMING & ANIMATION ENGINE //////////////////////////////////////////////////
+//TIMING  //////////////////////////////////////////////////
 var FRAMERATE = 60.0;
 var MSPERFRAME = 1000.0 / FRAMERATE;
 var SECPERFRAME = 1.0 / FRAMERATE;
 var PXPERSEC = 150.0;
 var PXPERMS = PXPERSEC / 1000.0;
 var PXPERFRAME = PXPERSEC / FRAMERATE;
-var framect = 0;
-var delta = 0.0;
-var lastFrameTimeMs = 0.0;
-var leadTime = 4.0;
-var played = false;
-var startTime = 0;
 var NUMPLAYERS = 1;
 // COLORS ///////////////////////////////////////////////////////////////////
 var clr_neonMagenta = new THREE.Color("rgb(255, 21, 160)");
@@ -111,21 +105,36 @@ var notationCanvasH;
 // AUDIO /////////////////////////////////////////////////////////////
 var actx;
 // CLOCK /////////////////////////////////////////////////////////////
+var framect = 0;
+var delta = 0.0;
+var lastFrameTimeMs = 0.0;
+var leadTime = 4.0;
+var createEventsGate = true;
+var startPieceGate = true;
+var startTime = 0;
 var ts = timesync.create({
   server: '/timesync',
-  interval: 10000
+  interval: 1000
 });
 var syncOffset = 0;
 // SOCKET IO /////////////////////////////////////////////////////////////
 var socket = io();
 var eventSet;
-// initial event after createScene();
-socket.on('eventsetbroadcast', function(data) {
-  if (!played) {
-    played = true;
+// Create Events
+socket.on('createEventsBroadcast', function(data) {
+  if (createEventsGate) {
+    createEventsGate = false;
     eventSet = data.eventdata;
     startTime = data.startTime;
-    eventMatrix = createEvents(); //startPiece trigger at end of this function
+    eventMatrix = createEvents();
+    initAudio();
+  }
+});
+// Start Piece
+socket.on('startpiecebroadcast', function(data) {
+  if (startPieceGate) {
+    startPieceGate = false;
+    startPiece();
   }
 });
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -136,8 +145,7 @@ function onstartup() {
   createScene();
 }
 // FUNCTION: startPiece -------------------------------------------------------------- //
-function startPiece() { //triggered at the end of createEvents()
-  initAudio();
+function startPiece() {
   startClockSync();
   requestAnimationFrame(animationEngine);
 }
@@ -146,9 +154,9 @@ function startClockSync() {
   var t_now = new Date(ts.now());
   lastFrameTimeMs = t_now.getTime();
   // get notified on changes in the offset
-  ts.on('change', function(offset) {
-    syncOffset = offset;
-  });
+  // ts.on('change', function(offset) {
+  //   syncOffset = offset;
+  // });
 }
 //FUNCTION initAudio ----------------------------------------------------------------- //
 function initAudio() {
@@ -156,8 +164,10 @@ function initAudio() {
 }
 // FUNCTION: animationEngine --------------------------------------------------------- //
 function animationEngine(timestamp) {
-  var t_localSysTimeDate = new Date();
-  var t_lt = t_localSysTimeDate.getTime() + syncOffset;
+  // var t_localSysTimeDate = new Date();
+  // var t_lt = t_localSysTimeDate.getTime() + syncOffset;
+  var t_now = new Date(ts.now());
+  t_lt = t_now.getTime();
   delta += t_lt - lastFrameTimeMs;
   lastFrameTimeMs = t_lt;
   while (delta >= MSPERFRAME) {
@@ -692,6 +702,5 @@ function createEvents() {
     var t_singleEventDataArray = [t_goFrame, t_playerNum, true, t_eventType, t_mesh, t_goTime, t_startZ, t_eventSpecificData, t_endFrame];
     t_eventMatrix.push(t_singleEventDataArray);
   }
-  startPiece();
   return t_eventMatrix;
 }
